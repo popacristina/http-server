@@ -14,15 +14,15 @@ const server = net.createServer((socket) => {
   socket.on('data', (data) => {
     
     const reqString = data.toString();
-    console.log('reqString:', reqString);
 
     const [requestLine] = reqString.split('\r\n');
     const [method, path, version] = reqString.split(' ');
 
-    console.log('path: ', path);
-
     if (path === '/') {
       socket.write('HTTP/1.1 200 OK\r\n\r\n');
+    } else if (/^\/echo/.test(path)) {
+      const [,words] = path.split('/echo/');
+      socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${words.length}\r\n\r\n${words}`);
     } else {
       socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
     }
