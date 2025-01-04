@@ -5,8 +5,33 @@ import * as net from "net";
 
 // Uncomment this to pass the first stage
 const server = net.createServer((socket) => {
-  socket.write('HTTP/1.1 200 OK\r\n\r\n');
-  socket.end();
+  // socket.write('HTTP/1.1 200 OK\r\n\r\n');
+
+  // socket.on('connection', (stream) => {
+  //   console.log('somebody connected');
+  // })
+
+  socket.on('data', (data) => {
+    
+    const reqString = data.toString();
+    console.log('reqString:', reqString);
+
+    const [requestLine] = reqString.split('\r\n');
+    const [method, path, version] = reqString.split(' ');
+
+    console.log('path: ', path);
+
+    if (path === '/') {
+      socket.write('HTTP/1.1 200 OK\r\n\r\n');
+    } else {
+      socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+    }
+  });
+
+  socket.on('end', () => {
+    console.log('Connection closed');
+  });
+
 });
 
 server.listen(4221, "localhost");
