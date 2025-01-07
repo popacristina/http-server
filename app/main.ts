@@ -56,14 +56,12 @@ function handleRequest (request: string, socket: net.Socket) {
       : sendResponse(socket, 400, "Bad Request", "text/plain", "User-Agent not found");
       break;
     case 'files':
-      const fileName = parameters[0];
-      try {
-        const directory = process.argv[3];
-        console.log(`${directory + fileName}`);
-        const fileData = fs.readFileSync(`${directory + fileName}`, 'utf-8');
-        sendResponse(socket, 200, "OK", "application/octet-stream", fileData);
-      } catch (err) {
-        sendResponse(socket, 404, "Not Found", "text/plain", "");
+      const filePath = process.argv[3] + parameters[0];
+      if (method === 'POST') {
+        let content = headers[headers.length - 1];
+        writeFile(filePath, content, socket);
+      } else {
+        readFile(filePath, socket);
       }
       break;
     default:
@@ -91,6 +89,25 @@ function sendResponse(
   ];
 
   socket.write(headers.join("\r\n"));
+}
+
+function readFile(filePath: string, socket: net.Socket) {
+  try {
+    const fileData = fs.readFileSync(`${filePath}`, 'utf-8');
+    sendResponse(socket, 200, "OK", "application/octet-stream", fileData);
+  } catch (err) {
+    sendResponse(socket, 404, "Not Found", "text/plain", "");
+  }
+}
+
+function writeFile(filePath: string, fileContent: string, socket: net.Socket) {
+  try {
+    fs.writeFileSync(filePath, fileContent);
+    sendResponse(socket, 201, "Created", "text/plain", "");
+  } catch (err) {
+    console.log('Error writing file: ', err);
+    socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+  }
 }
 
       
