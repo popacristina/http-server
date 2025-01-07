@@ -1,6 +1,7 @@
 import { file } from "bun";
 import * as net from "net";
 import fs from 'node:fs';
+import process from "node:process";
 
 
 const server = net.createServer((socket) => {
@@ -57,7 +58,9 @@ function handleRequest (request: string, socket: net.Socket) {
     case 'files':
       const fileName = parameters[0];
       try {
-        const fileData = fs.readFileSync(`/tmp/${fileName}`, 'utf-8');
+        const directory = process.argv[3];
+        console.log(`${directory + fileName}`);
+        const fileData = fs.readFileSync(`${directory + fileName}`, 'utf-8');
         sendResponse(socket, 200, "OK", "application/octet-stream", fileData);
       } catch (err) {
         sendResponse(socket, 404, "Not Found", "text/plain", "");
