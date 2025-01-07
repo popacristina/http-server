@@ -1,4 +1,6 @@
+import { file } from "bun";
 import * as net from "net";
+import fs from 'node:fs';
 
 
 const server = net.createServer((socket) => {
@@ -51,6 +53,15 @@ function handleRequest (request: string, socket: net.Socket) {
       userAgent ? 
       sendResponse(socket, 200, "OK", "text/plain", userAgent)
       : sendResponse(socket, 400, "Bad Request", "text/plain", "User-Agent not found");
+      break;
+    case 'files':
+      const fileName = parameters[0];
+      try {
+        const fileData = fs.readFileSync(`/tmp/${fileName}`, 'utf-8');
+        sendResponse(socket, 200, "OK", "application/octet-stream", fileData);
+      } catch (err) {
+        sendResponse(socket, 404, "Not Found", "text/plain", "");
+      }
       break;
     default:
       sendResponse(socket, 404, "Not Found", "text/plain", "");
