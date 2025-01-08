@@ -88,8 +88,7 @@ function sendResponse(
     `HTTP/1.1 ${statusCode} ${statusMessage}`,
     `Content-Type: ${contentType}`,
     `Content-Length: ${Buffer.byteLength(body)}`,
-    encode ? 'Content-Encoding: gzip' : "",
-    "",
+    encode ? 'Content-Encoding: gzip\r\n' : "",
     body,
   ];
 
