@@ -29,9 +29,12 @@ const server = net.createServer((socket) => {
 function handleRequest (request: string, socket: net.Socket) {
   const [requestLine, ...headers] = request.split("\r\n");
   const [method, path, version] = requestLine.split(" ");
+
+  const encoding = getHeaderValue(headers, 'Accept-Encoding');
+  const encode = encoding === 'gzip';
   
   if (path === '/') {
-    sendResponse(socket, 200, "OK", "text/plain", "");
+    sendResponse(socket, 200, "OK", "text/plain", "", encode);
     return;
   }
 
@@ -47,25 +50,25 @@ function handleRequest (request: string, socket: net.Socket) {
   switch (indexRoute) {
     case 'echo':
       const body = decodeURIComponent(path.replace("/echo/", ""));
-      sendResponse(socket, 200, "OK", "text/plain", body);
+      sendResponse(socket, 200, "OK", "text/plain", body, encode);
       break;
     case 'user-agent':
       const userAgent = getHeaderValue(headers, "User-Agent");
       userAgent ? 
-      sendResponse(socket, 200, "OK", "text/plain", userAgent)
-      : sendResponse(socket, 400, "Bad Request", "text/plain", "User-Agent not found");
+      sendResponse(socket, 200, "OK", "text/plain", userAgent, encode)
+      : sendResponse(socket, 400, "Bad Request", "text/plain", "User-Agent not found", encode);
       break;
     case 'files':
       const filePath = process.argv[3] + parameters[0];
       if (method === 'POST') {
         let content = headers[headers.length - 1];
-        writeFile(filePath, content, socket);
+        writeFile(filePath, content, socket, encode);
       } else {
-        readFile(filePath, socket);
+        readFile(filePath, socket, encode);
       }
       break;
     default:
-      sendResponse(socket, 404, "Not Found", "text/plain", "");
+      sendResponse(socket, 404, "Not Found", "text/plain", "", encode);
       break;
 
   }
@@ -78,12 +81,14 @@ function sendResponse(
   statusCode: number,
   statusMessage: string,
   contentType: string,
-  body: string
+  body: string,
+  encode: boolean
 ) {
   const headers = [
     `HTTP/1.1 ${statusCode} ${statusMessage}`,
     `Content-Type: ${contentType}`,
     `Content-Length: ${Buffer.byteLength(body)}`,
+    encode ? 'Content-Encoding: gzip' : "",
     "",
     body,
   ];
@@ -91,19 +96,19 @@ function sendResponse(
   socket.write(headers.join("\r\n"));
 }
 
-function readFile(filePath: string, socket: net.Socket) {
+function readFile(filePath: string, socket: net.Socket, encode: boolean) {
   try {
     const fileData = fs.readFileSync(`${filePath}`, 'utf-8');
-    sendResponse(socket, 200, "OK", "application/octet-stream", fileData);
+    sendResponse(socket, 200, "OK", "application/octet-stream", fileData, encode);
   } catch (err) {
-    sendResponse(socket, 404, "Not Found", "text/plain", "");
+    sendResponse(socket, 404, "Not Found", "text/plain", "", encode);
   }
 }
 
-function writeFile(filePath: string, fileContent: string, socket: net.Socket) {
+function writeFile(filePath: string, fileContent: string, socket: net.Socket, encode: boolean) {
   try {
     fs.writeFileSync(filePath, fileContent);
-    sendResponse(socket, 201, "Created", "text/plain", "");
+    sendResponse(socket, 201, "Created", "text/plain", "", encode);
   } catch (err) {
     console.log('Error writing file: ', err);
     socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
