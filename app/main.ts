@@ -1,8 +1,9 @@
-import { file } from "bun";
 import * as net from "net";
 import fs from 'node:fs';
 import process from "node:process";
+import { Buffer } from 'node:buffer';
 
+const zlib = require('zlib');
 
 const server = net.createServer((socket) => {
   console.log('New connection established...');
@@ -49,7 +50,9 @@ function handleRequest (request: string, socket: net.Socket) {
 
   switch (indexRoute) {
     case 'echo':
-      const body = decodeURIComponent(path.replace("/echo/", ""));
+      var body = decodeURIComponent(path.replace("/echo/", ""));
+      console.log(body);
+      body = encode ? gzipCompress(body) : body;
       sendResponse(socket, 200, "OK", "text/plain", body, encode);
       break;
     case 'user-agent':
@@ -112,6 +115,10 @@ function writeFile(filePath: string, fileContent: string, socket: net.Socket, en
     console.log('Error writing file: ', err);
     socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
   }
+}
+
+function gzipCompress(body: string) {
+  return zlib.gzipSync(body);
 }
 
       
