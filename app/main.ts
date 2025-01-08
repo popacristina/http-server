@@ -31,7 +31,7 @@ function handleRequest (request: string, socket: net.Socket) {
   const [method, path, version] = requestLine.split(" ");
 
   const encoding = getHeaderValue(headers, 'Accept-Encoding');
-  const encode = encoding === 'gzip';
+  const encode = encoding ? encoding.includes('gzip') : false;
   
   if (path === '/') {
     sendResponse(socket, 200, "OK", "text/plain", "", encode);
