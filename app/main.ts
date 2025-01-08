@@ -118,7 +118,7 @@ function writeFile(filePath: string, fileContent: string, socket: net.Socket, en
 }
 
 function gzipCompress(body: string) {
-  return zlib.gzipSync(body);
+  return zlib.gzipSync(body).toString('hex');
 }
 
       
