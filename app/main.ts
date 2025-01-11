@@ -86,22 +86,20 @@ function sendResponse(
   body: string | Buffer,
   encode: boolean
 ) {
-  // Prepare headers with proper CRLF
+  
   const headers = [
     `HTTP/1.1 ${statusCode} ${statusMessage}`,
     encode ? `Content-Encoding: gzip` : null,
     `Content-Type: ${contentType}`,
     `Content-Length: ${Buffer.isBuffer(body) ? body.length : Buffer.byteLength(body)}`,
-    "Connection: close", // Close connection after response
-    "", // End of headers
+    "Connection: close", 
+    "",
   ]
-    .filter(Boolean) // Remove null or undefined headers
-    .join("\r\n"); // Use CRLF for HTTP compliance
+    .filter(Boolean) 
+    .join("\r\n"); 
 
-  // Write headers
-  socket.write(headers + "\r\n\r\n"); // Add an extra CRLF to separate headers and body
+  socket.write(headers + "\r\n\r\n"); 
 
-  
   if (Buffer.isBuffer(body)) {
     //@ts-ignore
     socket.write(body);
