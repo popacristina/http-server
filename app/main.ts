@@ -2,7 +2,7 @@ import * as net from "net";
 import fs from 'node:fs';
 import process from "node:process";
 import { Buffer } from 'node:buffer';
-import * as zlib from "zlib";
+import * as zlib from 'zlib';
 
 
 const server = net.createServer((socket) => {
@@ -51,8 +51,8 @@ function handleRequest (request: string, socket: net.Socket) {
   switch (indexRoute) {
     case 'echo':
       var body = decodeURIComponent(path.replace("/echo/", ""));
-      console.log(body);
-      sendResponse(socket, 200, "OK", "text/plain", body, encode);
+      var responseBody = encode ? zlib.gzipSync(body) : body;
+      sendResponse(socket, 200, "OK", "text/plain", responseBody, encode);
       break;
     case 'user-agent':
       const userAgent = getHeaderValue(headers, "User-Agent");
@@ -83,7 +83,7 @@ function sendResponse(
   statusCode: number,
   statusMessage: string,
   contentType: string,
-  body: string,
+  body: string|Buffer,
   encode: boolean
 ) {
   const headers = [
@@ -91,7 +91,7 @@ function sendResponse(
     encode ? `Content-Encoding: gzip\r\nContent-Type: ${contentType}` : `Content-Type: ${contentType}`,
     `Content-Length: ${Buffer.byteLength(body)}`,
     "",
-    encode ? zlib.gzipSync(body) : body,
+    body,
   ];
 
   socket.write(headers.join("\r\n"));
