@@ -99,7 +99,7 @@ function sendResponse(
     .join("\r\n"); // Use CRLF for HTTP compliance
 
   // Write headers
-  socket.write(headers + "\r\n"); // Add an extra CRLF to separate headers and body
+  socket.write(headers + "\r\n\r\n"); // Add an extra CRLF to separate headers and body
 
   
   if (Buffer.isBuffer(body)) {
