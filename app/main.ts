@@ -50,8 +50,8 @@ function handleRequest (request: string, socket: net.Socket) {
 
   switch (indexRoute) {
     case 'echo':
-      var body = decodeURIComponent(path.replace("/echo/", ""));
-      var responseBody = encode ? zlib.gzipSync(body) : body;
+      const body = decodeURIComponent(path.replace("/echo/", ""));
+      const responseBody = encode ? zlib.gzipSync(body) : body;
       sendResponse(socket, 200, "OK", "text/plain", responseBody, encode);
       break;
     case 'user-agent':
@@ -83,18 +83,27 @@ function sendResponse(
   statusCode: number,
   statusMessage: string,
   contentType: string,
-  body: string|Buffer,
+  body: string | Buffer,
   encode: boolean
 ) {
+  
   const headers = [
     `HTTP/1.1 ${statusCode} ${statusMessage}`,
-    encode ? `Content-Encoding: gzip\r\nContent-Type: ${contentType}` : `Content-Type: ${contentType}`,
-    `Content-Length: ${Buffer.byteLength(body)}`,
-    "",
-    body,
-  ];
+    encode ? `Content-Encoding: gzip` : null,
+    `Content-Type: ${contentType}`,
+    `Content-Length: ${Buffer.isBuffer(body) ? body.length : Buffer.byteLength(body)}`,
+    "", 
+    ""  
+  ].filter(Boolean).join("\r\n");
+  
+  socket.write(headers);
+  if (Buffer.isBuffer(body)) {
+    socket.write(new Uint8Array(body));
+  } else {
+    socket.write(body);
+  }
 
-  socket.write(headers.join("\r\n"));
+  socket.end();
 }
 
 function readFile(filePath: string, socket: net.Socket, encode: boolean) {
